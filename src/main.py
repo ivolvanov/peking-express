@@ -15,11 +15,12 @@ class PekingGame(object):
         self.map = map
         self.setStartLocation(startLocation) 
         self.currentLocation = startLocation  
-        self.initializeMap(map) 
+        #self.initializeMap(map) 
 
 
     def initializeMap(self, map):
-        self.map_dict = json.load(map)
+        #self.map_dict = json.load(map)
+        self.map_dict = map
         self.nrOfLocations = self.map_dict['locations']['number']
         self.criticalLocations = self.map_dict['locations']['critical']
         self.sources = self.map_dict['connections']['source']
