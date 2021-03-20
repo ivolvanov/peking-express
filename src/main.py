@@ -1,8 +1,6 @@
 import json
 from collections import defaultdict 
 
-
-#paths = []
 class PekingGame(object):
     map_dict = {}
     startLocation = 0
@@ -27,12 +25,12 @@ class PekingGame(object):
         map = json.loads(testfile[0])
         startLocation = json.loads(testfile[1])
         budget = json.loads(testfile[2])
-        occupiedLocations = json.loads(testfile[3])
-   
-        self.initializeMap(map)
+        occupiedLocations = json.loads(testfile[3])  
+        
         self.setStartLocation(startLocation)
         self.updateOccupiedLocations(occupiedLocations , self.turn)
         self.setBudget(budget)
+        self.initializeMap(map)
 
     def initializeMap(self, map):
         self.map_dict = map
@@ -42,6 +40,14 @@ class PekingGame(object):
         self.targets = self.map_dict['connections']['target']
         self.prices = self.map_dict['connections']['price']
 
+        self.graph = Graph(self.nrOfLocations)
+        for i in range(len(self.sources)):
+            self.graph.addEdge(self.sources[i], self.targets[i], self.prices[i])
+            self.graph.addEdge(self.targets[i], self.sources[i], self.prices[i])
+
+        self.graph.generatePaths(self.startLocation, 88)
+        self.graph.paths.sort(key=len)
+        self.graph.calculatePathPrices()
 
     def setStartLocation(self, startLocation_param : int):
         self.startLocation = startLocation_param
@@ -57,6 +63,8 @@ class PekingGame(object):
         #self.competitorLocations[groupid - 1] = location
         self.occupiedLocations.append(locationList)
 
+    
+
     def nextMove(self) -> int:
 
         #algorithm goes BRRRRRRRRRRR
@@ -67,59 +75,47 @@ class PekingGame(object):
 class Graph: 
    
     def __init__(self, vertices): 
-
-        self.V = vertices  
-        
+        self.V = vertices          
         self.graph = defaultdict(list) 
-
         self.paths = list()
+        self.vertices = []
+        self.prices = []
+        self.pathPrices = []
  
-    def addEdge(self, u, v): 
-        self.graph[u].append(v) 
+    def addEdge(self, u, v, price): 
+        self.graph[u].append(v)
+        self.vertices.append((u, v))
+        self.prices.append(price)
+
+    def calculatePathPrices(self):
+        for i in range(len(self.paths)):
+            currentPathPrice = 0
+            for q in range(len(self.paths[i]) - 1):
+                index = self.vertices.index((self.paths[i][q], self.paths[i][q+1]))
+                currentPathPrice += self.prices[index]
+
+            self.pathPrices.append(currentPathPrice)
 
     def pathsUtil(self, u, d, visited, path): 
-
         visited[u]= True
-        path.append(u) 
+        path.append(u)
   
         if u == d:
             currPath = path[:]
             self.paths.append(currPath)
-            print(path)
         else: 
             for i in self.graph[u]: 
-                if visited[i]== False: 
+                if visited[i] == False: 
                     self.pathsUtil(i, d, visited, path) 
                       
         path.pop() 
         visited[u] = False
    
     def generatePaths(self, s, d): 
-
-        visited =[False]*(self.V) 
-
+        visited =[False] * 89 
         path = []
+        self.pathsUtil(s, d, visited, path)        
 
-        self.pathsUtil(s, d, visited, path) 
-
-# Create a graph given in the above diagram 
-g = Graph(4) 
-g.addEdge(0, 1) 
-g.addEdge(0, 2) 
-g.addEdge(0, 3) 
-g.addEdge(2, 0) 
-g.addEdge(2, 1) 
-g.addEdge(1, 3) 
-   
-#s = 2 ; d = 3
-#print ("Following are all different paths from % d to % d :" %(s, d)) 
-#g.generatePaths(s, d) 
-#print(g.paths)
-game = PekingGame("test1.txt")
-
-# This code is contributed by Neelam Yadav
-
-
-# if __name__ == '__main__':
-#     with open('test.json') as f:
-#         game = PekingGame(f, 3)
+game = PekingGame("./test/test1.txt")
+print(game.graph.paths)
+print(game.graph.pathPrices)
